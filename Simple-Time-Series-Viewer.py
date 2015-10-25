@@ -10,24 +10,19 @@ matplotlib.style.use('ggplot')
 
 from PyQt4 import QtGui
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QTAgg as NavigationToolbar
+from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
-class Window(QtGui.QDialog):
+class Window(QtGui.QWidget):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
-        # a figure instance to plot on
         self.figure = plt.figure()
-
-        # this is the Canvas Widget that displays the `figure`
-        # it takes the `figure` instance as a parameter to __init__
         self.canvas = FigureCanvas(self.figure)
 
-        # this is the Navigation widget
-        # it takes the Canvas widget and a parent
+        # set navigation bar
         self.toolbar = NavigationToolbar(self.canvas, self)
 
-        # Just some button connected to `plot` method
+        # add button
         self.button = QtGui.QPushButton('Plot')
         self.button.clicked.connect(self.plot)
 
@@ -39,12 +34,10 @@ class Window(QtGui.QDialog):
         self.setLayout(layout)
 
     def plot(self):
-        ''' plot some random stuff '''
-        
         # import data
         tsd = pd.DataFrame.from_csv('sensor.csv')
         
-        # Generate Data
+        # data for plot
         time = [mdates.date2num(idx.to_datetime()) for idx in tsd.index]
         y1 = tsd['brightness'].as_matrix()
         y2 = tsd['temperature'].as_matrix()
