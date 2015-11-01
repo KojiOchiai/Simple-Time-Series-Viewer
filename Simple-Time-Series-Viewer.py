@@ -9,7 +9,7 @@ import matplotlib.dates as mdates
 matplotlib.style.use('ggplot')
 import os.path
 
-from PyQt4 import QtGui
+from PyQt4 import QtCore, QtGui
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 
@@ -28,23 +28,30 @@ class Window(QtGui.QMainWindow):
         openAction.setShortcut('Ctrl+O')
         openAction.setStatusTip('Open CSV File')
         openAction.triggered.connect(self.open_file)
+
+        self.statusBar()
         
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
         fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
 
-        self.graph = Graph(self) 
+        self.graph = Graph(self)
+        self.column_list = QtGui.QListWidget()
+        self.column_dock = QtGui.QDockWidget("Column List", self)
+        self.column_dock.setWidget(QtGui.QListWidget())
         self.setCentralWidget(self.graph)
-        
+        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.column_dock)
         self.setWindowTitle('Simple Time Series Viewer')
 
     def open_file(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
                                                      os.path.expanduser('~'))
         # import data
-        tsd = pd.DataFrame.from_csv(filename)
-        self.graph.plot(tsd)
+        self.statusBar().showMessage('loading data')
+        self.tsd = pd.DataFrame.from_csv(filename)
+        self.statusBar().showMessage('')
+        self.graph.plot(self.tsd)
 
 class Graph(QtGui.QWidget):
     def __init__(self, parent):
@@ -65,8 +72,7 @@ class Graph(QtGui.QWidget):
     def plot(self, tsd):
         # data for plot
         time = [mdates.date2num(idx.to_datetime()) for idx in tsd.index]
-        y1 = tsd['brightness'].as_matrix()
-        y2 = tsd['temperature'].as_matrix()
+        y = tsd.iloc[:,0].as_matrix()
 
         # create an axis
         ax = self.figure.add_subplot(111)
@@ -76,8 +82,7 @@ class Graph(QtGui.QWidget):
 
         # plot data
         ax.hold(True)
-        ax.plot_date(time, y1, 'b-')
-        ax.plot_date(time, y2, 'g-')
+        ax.plot_date(time, y, '-')
         self.figure.autofmt_xdate()
         
         # refresh canvas
