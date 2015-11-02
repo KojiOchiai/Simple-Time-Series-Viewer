@@ -37,21 +37,21 @@ class Window(QtGui.QMainWindow):
         fileMenu.addAction(openAction)
 
         self.graph = Graph(self)
-        self.column_list = QtGui.QListWidget()
-        self.column_dock = QtGui.QDockWidget("Column List", self)
-        self.column_dock.setWidget(QtGui.QListWidget())
         self.setCentralWidget(self.graph)
-        self.addDockWidget(QtCore.Qt.RightDockWidgetArea, self.column_dock)
         self.setWindowTitle('Simple Time Series Viewer')
 
     def open_file(self):
         filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
                                                      os.path.expanduser('~'))
         # import data
-        self.statusBar().showMessage('loading data')
-        self.tsd = pd.DataFrame.from_csv(filename)
+        self.statusBar().showMessage('loading data...')
+        data = pd.DataFrame.from_csv(filename)
         self.statusBar().showMessage('')
-        self.graph.plot(self.tsd)
+        self.statusBar().showMessage('ploting...')
+        self.graph.data = data
+        self.graph.column_plot[0] = [data.columns[0], data.columns[1]]
+        self.graph.plot()
+        self.statusBar().showMessage('')
 
 class Graph(QtGui.QWidget):
     def __init__(self, parent):
@@ -59,20 +59,30 @@ class Graph(QtGui.QWidget):
 
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
+        self.column_plot = [[]]
 
         # set navigation bar
         self.toolbar = NavigationToolbar(self.canvas, self)
 
+        # column list
+        self.column_list = QtGui.QListWidget()
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
+                                       QtGui.QSizePolicy.Expanding)
+        self.column_list.setSizePolicy(sizePolicy)
+        
         # set the layout
-        layout = QtGui.QVBoxLayout()
-        layout.addWidget(self.toolbar)
-        layout.addWidget(self.canvas)
-        self.setLayout(layout)
+        vlayout = QtGui.QVBoxLayout()
+        vlayout.addWidget(self.toolbar)
+        vlayout.addWidget(self.canvas)
+        
+        hlayout = QtGui.QHBoxLayout()
+        hlayout.addLayout(vlayout)
+        hlayout.addWidget(self.column_list)
+        self.setLayout(hlayout)
 
-    def plot(self, tsd):
-        # data for plot
-        time = [mdates.date2num(idx.to_datetime()) for idx in tsd.index]
-        y = tsd.iloc[:,0].as_matrix()
+    def plot(self):
+        if self.data.empty:
+            return
 
         # create an axis
         ax = self.figure.add_subplot(111)
@@ -80,10 +90,16 @@ class Graph(QtGui.QWidget):
         # discards the old graph
         ax.hold(False)
 
-        # plot data
-        ax.hold(True)
-        ax.plot_date(time, y, '-')
-        self.figure.autofmt_xdate()
+        for columname in self.column_plot[0]:
+            # data for plot
+            time = [mdates.date2num(idx.to_datetime())
+                    for idx in self.data.index]
+            y = self.data[columname].as_matrix()
+        
+            # plot data
+            ax.hold(True)
+            ax.plot_date(time, y, '-')
+            self.figure.autofmt_xdate()
         
         # refresh canvas
         self.canvas.draw()
