@@ -66,7 +66,6 @@ class Graph(QtGui.QWidget):
 
         # set navigation bar
         self.toolbar = NavigationToolbar(self.canvas, self)
-        self.toolbar.pan()
 
         # column list
         self.column_list = QtGui.QListWidget()
