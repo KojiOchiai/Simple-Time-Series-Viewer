@@ -33,8 +33,8 @@ class Window(QtGui.QMainWindow):
         
         menubar = self.menuBar()
         fileMenu = menubar.addMenu('&File')
-        fileMenu.addAction(exitAction)
         fileMenu.addAction(openAction)
+        fileMenu.addAction(exitAction)
 
         self.graph = Graph(self)
         self.setCentralWidget(self.graph)
@@ -49,7 +49,7 @@ class Window(QtGui.QMainWindow):
         self.statusBar().showMessage('')
         self.statusBar().showMessage('ploting...')
         self.graph.set_data(data)
-        self.graph.column_plot = [[data.columns[0]], [data.columns[1]]]
+        self.graph.column_plot = [[data.columns[0]], [data.columns[1]], []]
         self.graph.plot()
         self.statusBar().showMessage('')
 
@@ -126,9 +126,9 @@ class Graph(QtGui.QWidget):
                 # plot data
                 ax.hold(True)
                 ax.plot_date(time, y, '-', label=column_name)
-                self.figure.autofmt_xdate()
+                plt.legend()
 
-            plt.legend()
+            self.figure.autofmt_xdate()
         
         # refresh canvas
         self.canvas.draw()
