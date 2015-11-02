@@ -54,16 +54,18 @@ class Window(QtGui.QMainWindow):
             self.import_data(path)
 
     def import_data(self, filename):
-        # import data
-        self.statusBar().showMessage('loading data...')
-        data = pd.DataFrame.from_csv(filename)
-        self.statusBar().showMessage('')
-        # plot data
-        self.statusBar().showMessage('ploting...')
-        self.graph.set_data(data)
-        self.graph.column_plot = [[data.columns[0]], [data.columns[1]], []]
-        self.graph.plot()
-        self.statusBar().showMessage('')
+        filebody, file_extension = os.path.splitext(filename)
+        if file_extension == '.csv':
+            # import data
+            self.statusBar().showMessage('loading data...')
+            data = pd.DataFrame.from_csv(filename)
+            self.statusBar().showMessage('')
+            # plot data
+            self.statusBar().showMessage('ploting...')
+            self.graph.set_data(data)
+            self.graph.column_plot = [[data.columns[0]], [data.columns[1]], []]
+            self.graph.plot()
+            self.statusBar().showMessage('')
 
 class Graph(QtGui.QWidget):
     def __init__(self, parent):
@@ -130,7 +132,7 @@ class Graph(QtGui.QWidget):
             item = QtGui.QListWidgetItem(label)
             self.column_list.addItem(item)
 
-    def get_Data(self):
+    def get_data(self):
         return self._data
 
     def plot(self):
