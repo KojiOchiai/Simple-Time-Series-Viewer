@@ -57,10 +57,12 @@ class Graph(QtGui.QWidget):
     def __init__(self, parent):
         super(Graph, self).__init__(parent)
 
+        # set attributes
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
         self._data = None
         self.column_plot = [[]]
+        self.axis_select = None
 
         # set navigation bar
         self.toolbar = NavigationToolbar(self.canvas, self)
@@ -75,6 +77,9 @@ class Graph(QtGui.QWidget):
         # add buttun
         self.add_button = QtGui.QPushButton('add axis')
         self.del_button = QtGui.QPushButton('delete axis')
+
+        # selective axis
+        self.figure.canvas.mpl_connect('button_press_event', self.select_axis)
 
         # set the layout
         vlayout = QtGui.QVBoxLayout()
@@ -100,6 +105,7 @@ class Graph(QtGui.QWidget):
         return self._data
 
     def plot(self):
+        ''''reflesh plot'''
         if self._data.empty:
             return
         
@@ -133,6 +139,23 @@ class Graph(QtGui.QWidget):
         # refresh canvas
         self.canvas.draw()
 
+    def select_axis(self, event):
+        axis = event.inaxes
+        if axis is None:
+            # Occurs when a region not in an axis is clicked...
+            return
+        if (event.button is 1) and (self.toolbar._active == None):
+            if axis is self.axis_select:
+                axis.set_axis_bgcolor((0.9, 0.9, 0.9))
+                self.axis_select = None
+            else:
+                axis.set_axis_bgcolor((0.8, 0.8, 0.9))
+                self.axis_select = axis
+                for ax in event.canvas.figure.axes:
+                    if axis is not ax:
+                        ax.set_axis_bgcolor((0.9, 0.9, 0.9))
+        event.canvas.draw()
+        
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
 
