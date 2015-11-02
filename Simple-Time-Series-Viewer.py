@@ -72,11 +72,19 @@ class Graph(QtGui.QWidget):
                                        QtGui.QSizePolicy.Expanding)
         self.column_list.setSizePolicy(sizePolicy)
         
+        # add buttun
+        self.add_button = QtGui.QPushButton('add axis')
+        self.del_button = QtGui.QPushButton('delete axis')
+
         # set the layout
         vlayout = QtGui.QVBoxLayout()
         vlayout.addWidget(self.toolbar)
         vlayout.addWidget(self.canvas)
-        
+        button_layout = QtGui.QHBoxLayout()
+        button_layout.addWidget(self.add_button)
+        button_layout.addWidget(self.del_button)
+        vlayout.addLayout(button_layout)        
+
         hlayout = QtGui.QHBoxLayout()
         hlayout.addLayout(vlayout)
         hlayout.addWidget(self.column_list)
