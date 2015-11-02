@@ -49,7 +49,7 @@ class Window(QtGui.QMainWindow):
         self.statusBar().showMessage('')
         self.statusBar().showMessage('ploting...')
         self.graph.set_data(data)
-        self.graph.column_plot[0] = [data.columns[0], data.columns[1]]
+        self.graph.column_plot = [[data.columns[0]], [data.columns[1]]]
         self.graph.plot()
         self.statusBar().showMessage('')
 
@@ -102,26 +102,35 @@ class Graph(QtGui.QWidget):
     def plot(self):
         if self._data.empty:
             return
-
-        # create an axis
-        ax = self.figure.add_subplot(111)
-
-        # discards the old graph
-        ax.hold(False)
-
-        for column_name in self.column_plot[0]:
-            # data for plot
-            time = [mdates.date2num(idx.to_datetime())
-                    for idx in self._data.index]
-            y = self._data[column_name].as_matrix()
         
-            # plot data
-            ax.hold(True)
-            ax.plot_date(time, y, '-', label=column_name)
-            self.figure.autofmt_xdate()
+        n_subplot = len(self.column_plot)
+        for n_row, columns in enumerate(self.column_plot):
+            # create an axis
+            if n_row == 0:
+                ax = self.figure.add_subplot(n_subplot, 1, n_row+1)
+                # save first axis for link axis
+                ax1 = ax
+            else:
+                ax = self.figure.add_subplot(n_subplot, 1, n_row+1,
+                                             sharex=ax1)
+
+            # discards the old graph
+            ax.hold(False)
+            
+            for column_name in columns:
+                # data for plot
+                time = [mdates.date2num(idx.to_datetime())
+                        for idx in self._data.index]
+                y = self._data[column_name].as_matrix()
+                
+                # plot data
+                ax.hold(True)
+                ax.plot_date(time, y, '-', label=column_name)
+                self.figure.autofmt_xdate()
+
+            plt.legend()
         
         # refresh canvas
-        plt.legend()
         self.canvas.draw()
 
 if __name__ == '__main__':
