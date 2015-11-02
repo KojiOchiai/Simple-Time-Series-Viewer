@@ -37,16 +37,28 @@ class Window(QtGui.QMainWindow):
         fileMenu.addAction(exitAction)
 
         self.graph = Graph(self)
+        # set file drop event
+        self.connect(self.graph, QtCore.SIGNAL("dropped"), self.csv_dropped)
+        
         self.setCentralWidget(self.graph)
         self.setWindowTitle('Simple Time Series Viewer')
 
     def open_file(self):
-        filename = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
+        path = QtGui.QFileDialog.getOpenFileName(self, 'Open file',
                                                      os.path.expanduser('~'))
+        self.import_data(path)
+
+    def csv_dropped(self, path_list):
+        path = path_list[0]
+        if os.path.exists(path):
+            self.import_data(path)
+
+    def import_data(self, filename):
         # import data
         self.statusBar().showMessage('loading data...')
         data = pd.DataFrame.from_csv(filename)
         self.statusBar().showMessage('')
+        # plot data
         self.statusBar().showMessage('ploting...')
         self.graph.set_data(data)
         self.graph.column_plot = [[data.columns[0]], [data.columns[1]], []]
@@ -56,7 +68,8 @@ class Window(QtGui.QMainWindow):
 class Graph(QtGui.QWidget):
     def __init__(self, parent):
         super(Graph, self).__init__(parent)
-
+        self.setAcceptDrops(True)
+        
         # set attributes
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
@@ -94,6 +107,23 @@ class Graph(QtGui.QWidget):
         hlayout.addWidget(self.column_list)
         self.setLayout(hlayout)
 
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+                
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls:
+            event.setDropAction(QtCore.Qt.CopyAction)
+            event.accept()
+            l = []
+            for url in event.mimeData().urls():
+                l.append(str(url.toLocalFile()))
+            self.emit(QtCore.SIGNAL("dropped"), l)
+        else:
+            event.ignore()
+                        
     def set_data(self, data):
         self._data = data
         for label in self._data.columns:
