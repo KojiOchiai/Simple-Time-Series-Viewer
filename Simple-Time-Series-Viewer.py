@@ -91,8 +91,10 @@ class Graph(QtGui.QWidget):
         # add buttun
         self.add_button = QtGui.QPushButton('add axis')
         self.add_button.clicked.connect(self.add_axis)
+        self.add_button.setStyleSheet("background-color: rgb(250, 150, 150)")
         self.del_button = QtGui.QPushButton('delete axis')
         self.del_button.clicked.connect(self.delete_axis)
+        self.del_button.setStyleSheet("background-color: rgb(150, 150, 250)")
 
         # selective axis
         self.figure.canvas.mpl_connect('button_press_event', self.select_axis)
