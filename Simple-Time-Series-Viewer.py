@@ -139,7 +139,10 @@ class Graph(QtGui.QWidget):
     def plot(self):
         if self._data.empty:
             return
-        
+
+        # discards the old graph
+        self.figure.clear()
+
         n_subplot = len(self.column_plot)
         for n_row, columns in enumerate(self.column_plot):
             # create an axis
@@ -150,10 +153,7 @@ class Graph(QtGui.QWidget):
             else:
                 ax = self.figure.add_subplot(n_subplot, 1, n_row+1,
                                              sharex=ax1)
-
-            # discards the old graph
-            # ax.hold(False)
-
+            
             for column_name in columns:
                 # data for plot
                 time = [mdates.date2num(idx.to_datetime())
@@ -161,13 +161,12 @@ class Graph(QtGui.QWidget):
                 y = self._data[column_name].as_matrix()
                 
                 # plot data
+                ax.hold(True)
                 ax.plot_date(time, y, '-', label=column_name)
                 plt.legend()
-                ax.hold(True)
-
-            self.figure.autofmt_xdate()
             
         # refresh canvas
+        self.figure.autofmt_xdate()
         self.canvas.draw()
 
     def select_axis(self, event):
