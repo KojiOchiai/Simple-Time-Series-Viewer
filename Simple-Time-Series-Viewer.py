@@ -191,17 +191,20 @@ class Graph(QtGui.QWidget):
             # Occurs when a region not in an axis is clicked...
             return
         if (event.button is 1) and (self.toolbar._active == None):
-            if axis is self.selected_axis:
-                axis.set_axis_bgcolor((0.9, 0.9, 0.9))
-                self.selected_axis = None
-            else:
-                axis.set_axis_bgcolor((0.8, 0.8, 0.9))
-                self.selected_axis = axis
-                for ax in event.canvas.figure.axes:
-                    if axis is not ax:
-                        ax.set_axis_bgcolor((0.9, 0.9, 0.9))
-            self.select_axis_item()
-        event.canvas.draw()
+            self.update_axis_state(axis)
+
+    def update_axis_state(self, axis):
+        if axis is self.selected_axis:
+            axis.set_axis_bgcolor((0.9, 0.9, 0.9))
+            self.selected_axis = None
+        else:
+            axis.set_axis_bgcolor((0.8, 0.8, 0.9))
+            self.selected_axis = axis
+            for ax in self.canvas.figure.axes:
+                if axis is not ax:
+                    ax.set_axis_bgcolor((0.9, 0.9, 0.9))
+        self.select_axis_item()
+        self.canvas.draw()
 
     def select_axis_item(self):
         item_list = self.axis_labels(self.selected_axis)
@@ -216,6 +219,8 @@ class Graph(QtGui.QWidget):
             ax_index = len(self.plot_column)
         else:
             ax_index = self.axis_index(self.selected_axis)
+            if ax_index == None:
+                ax_index = len(self.plot_column)
         if ax_index <= len(self.plot_column):
             self.plot_column.insert(ax_index+1, [])
             self.plot()
@@ -232,6 +237,7 @@ class Graph(QtGui.QWidget):
         for i, ax in enumerate(self.figure.axes):
             if axis is ax:
                 return i
+        return None
 
     def axis_labels(self, axis):
         if self.selected_axis == None:
