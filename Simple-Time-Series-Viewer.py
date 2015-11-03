@@ -63,7 +63,7 @@ class Window(QtGui.QMainWindow):
             # plot data
             self.statusBar().showMessage('ploting...')
             self.graph.set_data(data)
-            self.graph.column_plot = [[data.columns[0]]]
+            self.graph.plot_column = [[data.columns[0]]]
             self.graph.plot()
             self.statusBar().showMessage('')
 
@@ -76,8 +76,8 @@ class Graph(QtGui.QWidget):
         self.figure = plt.figure()
         self.canvas = FigureCanvas(self.figure)
         self._data = None
-        self.column_plot = [[]]
-        self.axis_select = None
+        self.plot_column = [[]]
+        self.selected_axis = None
 
         # set navigation bar
         self.toolbar = NavigationToolbar(self.canvas, self)
@@ -87,7 +87,9 @@ class Graph(QtGui.QWidget):
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed,
                                        QtGui.QSizePolicy.Expanding)
         self.column_list.setSizePolicy(sizePolicy)
-        
+        self.column_list.setSelectionMode(QtGui.QAbstractItemView.MultiSelection)
+        self.column_list.itemClicked.connect(self.add_line)
+
         # add buttun
         self.add_button = QtGui.QPushButton('add axis')
         self.add_button.clicked.connect(self.add_axis)
@@ -106,7 +108,7 @@ class Graph(QtGui.QWidget):
         button_layout = QtGui.QHBoxLayout()
         button_layout.addWidget(self.add_button)
         button_layout.addWidget(self.del_button)
-        vlayout.addLayout(button_layout)        
+        vlayout.addLayout(button_layout)
 
         hlayout = QtGui.QHBoxLayout()
         hlayout.addLayout(vlayout)
@@ -118,7 +120,7 @@ class Graph(QtGui.QWidget):
             event.accept()
         else:
             event.ignore()
-                
+            
     def dropEvent(self, event):
         if event.mimeData().hasUrls:
             event.setDropAction(QtCore.Qt.CopyAction)
@@ -129,7 +131,7 @@ class Graph(QtGui.QWidget):
             self.emit(QtCore.SIGNAL("dropped"), l)
         else:
             event.ignore()
-                        
+            
     def set_data(self, data):
         self._data = data
         self.column_list.clear()
@@ -147,15 +149,15 @@ class Graph(QtGui.QWidget):
         # discards the old graph
         self.figure.clear()
 
-        n_subplot = len(self.column_plot)
-        for n_row, columns in enumerate(self.column_plot):
+        n_subplot = len(self.plot_column)
+        for i_row, columns in enumerate(self.plot_column):
             # create an axis
-            if n_row == 0:
-                ax = self.figure.add_subplot(n_subplot, 1, n_row+1)
+            if i_row == 0:
+                ax = self.figure.add_subplot(n_subplot, 1, i_row+1)
                 # save first axis for link axis
                 ax1 = ax
             else:
-                ax = self.figure.add_subplot(n_subplot, 1, n_row+1,
+                ax = self.figure.add_subplot(n_subplot, 1, i_row+1,
                                              sharex=ax1)
             
             for column_name in columns:
@@ -173,39 +175,57 @@ class Graph(QtGui.QWidget):
         self.figure.autofmt_xdate()
         self.canvas.draw()
 
+    def add_line(self, item):
+        i_axis = self.axis_index(self.selected_axis)
+        if i_axis == None:
+            return
+        if item.isSelected():
+            self.plot_column[i_axis].append(item.text())
+        else:
+            self.plot_column[i_axis].remove(item.text())
+        self.plot()
+
     def select_axis(self, event):
         axis = event.inaxes
         if axis is None:
             # Occurs when a region not in an axis is clicked...
             return
         if (event.button is 1) and (self.toolbar._active == None):
-            if axis is self.axis_select:
+            if axis is self.selected_axis:
                 axis.set_axis_bgcolor((0.9, 0.9, 0.9))
-                self.axis_select = None
+                self.selected_axis = None
             else:
                 axis.set_axis_bgcolor((0.8, 0.8, 0.9))
-                self.axis_select = axis
+                self.selected_axis = axis
                 for ax in event.canvas.figure.axes:
                     if axis is not ax:
                         ax.set_axis_bgcolor((0.9, 0.9, 0.9))
+            self.select_axis_item()
         event.canvas.draw()
 
+    def select_axis_item(self):
+        item_list = self.axis_labels(self.selected_axis)
+        for i in range(self.column_list.count()):
+            self.column_list.item(i).setSelected(False)
+            for item in item_list:
+                if item == self.column_list.item(i).text():
+                    self.column_list.item(i).setSelected(True)
+            
     def add_axis(self):
-        if self.axis_select == None:
-            ax_index = len(self.column_plot)
-            print(ax_index)
+        if self.selected_axis == None:
+            ax_index = len(self.plot_column)
         else:
-            ax_index = self.axis_index(self.axis_select)
-        if ax_index <= len(self.column_plot):
-            self.column_plot.insert(ax_index+1, [])
+            ax_index = self.axis_index(self.selected_axis)
+        if ax_index <= len(self.plot_column):
+            self.plot_column.insert(ax_index+1, [])
             self.plot()
         
     def delete_axis(self):
-        if self.axis_select == None:
+        if self.selected_axis == None:
             return
-        ax_index = self.axis_index(self.axis_select)
-        if ax_index <= len(self.column_plot):
-            del(self.column_plot[ax_index])
+        ax_index = self.axis_index(self.selected_axis)
+        if ax_index <= len(self.plot_column):
+            del(self.plot_column[ax_index])
             self.plot()
 
     def axis_index(self, axis):
@@ -214,7 +234,9 @@ class Graph(QtGui.QWidget):
                 return i
 
     def axis_labels(self, axis):
-        h, labels = self.axis_select.get_legend_handles_labels()
+        if self.selected_axis == None:
+            return []
+        h, labels = self.selected_axis.get_legend_handles_labels()
         return labels
         
 if __name__ == '__main__':
