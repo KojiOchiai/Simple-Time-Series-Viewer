@@ -185,6 +185,15 @@ class Graph(QtGui.QWidget):
                     if axis is not ax:
                         ax.set_axis_bgcolor((0.9, 0.9, 0.9))
         event.canvas.draw()
+    
+    def axis_index(axis):
+        for i, ax in enumerate(self.figure.axes):
+            if axes is ax:
+                return i
+
+    def axis_labels(axis):
+        h, labels = self.axis_select.get_legend_handles_labels()
+        return labels
         
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)
