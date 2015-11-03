@@ -128,6 +128,7 @@ class Graph(QtGui.QWidget):
                         
     def set_data(self, data):
         self._data = data
+        self.column_list.clear()
         for label in self._data.columns:
             item = QtGui.QListWidgetItem(label)
             self.column_list.addItem(item)
@@ -136,7 +137,6 @@ class Graph(QtGui.QWidget):
         return self._data
 
     def plot(self):
-        ''''reflesh plot'''
         if self._data.empty:
             return
         
@@ -152,8 +152,8 @@ class Graph(QtGui.QWidget):
                                              sharex=ax1)
 
             # discards the old graph
-            ax.hold(False)
-            
+            # ax.hold(False)
+
             for column_name in columns:
                 # data for plot
                 time = [mdates.date2num(idx.to_datetime())
@@ -161,12 +161,12 @@ class Graph(QtGui.QWidget):
                 y = self._data[column_name].as_matrix()
                 
                 # plot data
-                ax.hold(True)
                 ax.plot_date(time, y, '-', label=column_name)
                 plt.legend()
+                ax.hold(True)
 
             self.figure.autofmt_xdate()
-        
+            
         # refresh canvas
         self.canvas.draw()
 
