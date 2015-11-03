@@ -192,8 +192,10 @@ class Graph(QtGui.QWidget):
 
     def add_axis(self):
         if self.axis_select == None:
-            return
-        ax_index = self.axis_index(self.axis_select)
+            ax_index = len(self.column_plot)
+            print(ax_index)
+        else:
+            ax_index = self.axis_index(self.axis_select)
         if ax_index <= len(self.column_plot):
             self.column_plot.insert(ax_index+1, [])
             self.plot()
