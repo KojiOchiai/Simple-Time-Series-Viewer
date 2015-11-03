@@ -63,7 +63,7 @@ class Window(QtGui.QMainWindow):
             # plot data
             self.statusBar().showMessage('ploting...')
             self.graph.set_data(data)
-            self.graph.column_plot = [[data.columns[0]], [data.columns[1]], []]
+            self.graph.column_plot = [[data.columns[0]]]
             self.graph.plot()
             self.statusBar().showMessage('')
 
@@ -90,7 +90,9 @@ class Graph(QtGui.QWidget):
         
         # add buttun
         self.add_button = QtGui.QPushButton('add axis')
+        self.add_button.clicked.connect(self.add_axis)
         self.del_button = QtGui.QPushButton('delete axis')
+        self.del_button.clicked.connect(self.delete_axis)
 
         # selective axis
         self.figure.canvas.mpl_connect('button_press_event', self.select_axis)
@@ -185,13 +187,29 @@ class Graph(QtGui.QWidget):
                     if axis is not ax:
                         ax.set_axis_bgcolor((0.9, 0.9, 0.9))
         event.canvas.draw()
-    
-    def axis_index(axis):
+
+    def add_axis(self):
+        if self.axis_select == None:
+            return
+        ax_index = self.axis_index(self.axis_select)
+        if ax_index <= len(self.column_plot):
+            self.column_plot.insert(ax_index+1, [])
+            self.plot()
+        
+    def delete_axis(self):
+        if self.axis_select == None:
+            return
+        ax_index = self.axis_index(self.axis_select)
+        if ax_index <= len(self.column_plot):
+            del(self.column_plot[ax_index])
+            self.plot()
+
+    def axis_index(self, axis):
         for i, ax in enumerate(self.figure.axes):
-            if axes is ax:
+            if axis is ax:
                 return i
 
-    def axis_labels(axis):
+    def axis_labels(self, axis):
         h, labels = self.axis_select.get_legend_handles_labels()
         return labels
         
